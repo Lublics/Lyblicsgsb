@@ -126,6 +126,7 @@ function createBuilding($db) {
         $buildingId = $db->lastInsertId();
 
         Logger::audit('BUILDING_CREATED', $session['user_id'], ['building_id' => $buildingId, 'name' => $name]);
+        ActivityLogger::log('BUILDING_CREATED', $session, 'batiment', $buildingId, $name);
 
         jsonResponse([
             'success' => true,
@@ -189,6 +190,7 @@ function updateBuilding($db) {
         $stmt->execute($params);
 
         Logger::audit('BUILDING_UPDATED', $session['user_id'], ['building_id' => $buildingId]);
+        ActivityLogger::log('BUILDING_UPDATED', $session, 'batiment', $buildingId, $data['name'] ?? '');
 
         jsonResponse(['success' => true, 'message' => 'Batiment mis a jour']);
 
@@ -231,6 +233,7 @@ function deleteBuilding($db) {
         }
 
         Logger::audit('BUILDING_DELETED', $session['user_id'], ['building_id' => $buildingId]);
+        ActivityLogger::log('BUILDING_DELETED', $session, 'batiment', $buildingId, null);
 
         jsonResponse(['success' => true, 'message' => 'Batiment supprime']);
 

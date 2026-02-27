@@ -164,6 +164,7 @@ function createUser($db) {
             'role' => $role
         ]);
         Logger::info('User created by admin', ['new_user_id' => $userId, 'admin_id' => $session['user_id']]);
+        ActivityLogger::log('USER_CREATED', $session, 'utilisateur', $userId, $email);
 
         jsonResponse([
             'success' => true,
@@ -289,6 +290,7 @@ function updateUser($db) {
 
         Logger::audit('USER_UPDATED', $session['user_id'], ['target_user_id' => $userId]);
         Logger::info('User updated', ['user_id' => $userId, 'updated_by' => $session['user_id']]);
+        ActivityLogger::log('USER_UPDATED', $session, 'utilisateur', $userId, $data['email'] ?? '');
 
         jsonResponse(['success' => true, 'message' => 'Utilisateur mis a jour']);
 
@@ -345,6 +347,7 @@ function deleteUser($db) {
             'email' => $user['email_user']
         ]);
         Logger::info('User deleted', ['user_id' => $userId, 'deleted_by' => $session['user_id']]);
+        ActivityLogger::log('USER_DELETED', $session, 'utilisateur', $userId, $user['email_user']);
 
         jsonResponse(['success' => true, 'message' => 'Utilisateur supprime']);
 

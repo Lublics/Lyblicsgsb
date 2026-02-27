@@ -11,6 +11,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- SUPPRESSION DES TABLES EXISTANTES
 -- =====================================================
 
+DROP TABLE IF EXISTS `ActivityLog`;
 DROP TABLE IF EXISTS `Reservation_Option`;
 DROP TABLE IF EXISTS `Notification`;
 DROP TABLE IF EXISTS `Reservation`;
@@ -130,6 +131,24 @@ CREATE TABLE `Notification` (
     FOREIGN KEY (`id_reservation`) REFERENCES `Reservation`(`id_reservation`) ON UPDATE CASCADE ON DELETE CASCADE,
     INDEX `idx_reservation` (`id_reservation`),
     INDEX `idx_date` (`date_envoi`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table ActivityLog
+CREATE TABLE `ActivityLog` (
+    `id_log` INT AUTO_INCREMENT PRIMARY KEY,
+    `action_type` VARCHAR(50) NOT NULL,
+    `actor_id` INT DEFAULT NULL,
+    `actor_name` VARCHAR(100) NOT NULL,
+    `actor_role` VARCHAR(20) NOT NULL,
+    `target_type` VARCHAR(50) NOT NULL,
+    `target_id` INT DEFAULT NULL,
+    `target_label` VARCHAR(255) DEFAULT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`actor_id`) REFERENCES `Utilisateur`(`id_utilisateur`) ON UPDATE CASCADE ON DELETE SET NULL,
+    INDEX `idx_action` (`action_type`),
+    INDEX `idx_actor` (`actor_id`),
+    INDEX `idx_date` (`created_at`),
+    INDEX `idx_target` (`target_type`, `target_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================

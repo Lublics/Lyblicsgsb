@@ -112,12 +112,46 @@ function getBookings($db) {
     $stmt->execute($params);
     $bookings = $stmt->fetchAll();
 
-    $formattedBookings = array_map(function($booking) use ($db) {
+    // Batch : recuperer la derniere action pour toutes les reservations en une seule requete
+    $lastActions = [];
+    if (!empty($bookings)) {
+        $bookingIds = array_column($bookings, 'id_reservation');
+        $placeholders = implode(',', array_fill(0, count($bookingIds), '?'));
+        $logSql = "SELECT a.target_id, a.action_type, a.actor_name, a.actor_role
+                   FROM ActivityLog a
+                   INNER JOIN (
+                       SELECT target_id, MAX(created_at) as max_date
+                       FROM ActivityLog
+                       WHERE target_type = 'reservation' AND target_id IN ($placeholders)
+                       GROUP BY target_id
+                   ) latest ON a.target_id = latest.target_id AND a.created_at = latest.max_date AND a.target_type = 'reservation'";
+        $logStmt = $db->prepare($logSql);
+        $logStmt->execute($bookingIds);
+        foreach ($logStmt->fetchAll() as $log) {
+            $lastActions[$log['target_id']] = $log;
+        }
+    }
+
+    $actionMap = [
+        'BOOKING_CREATED' => 'Creee',
+        'BOOKING_UPDATED' => 'Modifiee',
+        'BOOKING_CANCELLED' => 'Annulee'
+    ];
+
+    $formattedBookings = array_map(function($booking) use ($db, $lastActions, $actionMap) {
         $options = getBookingOptions($db, $booking['id_reservation']);
+        $ref = 'RES-' . str_pad($booking['id_reservation'], 3, '0', STR_PAD_LEFT);
+
+        $actionText = 'Creee';
+        $lastAction = $lastActions[$booking['id_reservation']] ?? null;
+        if ($lastAction) {
+            $label = $actionMap[$lastAction['action_type']] ?? $lastAction['action_type'];
+            $actionText = $label . ' par ' . $lastAction['actor_name'] . ' (' . $lastAction['actor_role'] . ')';
+        }
 
         return [
             'id' => (int)$booking['id_reservation'],
-            'ref' => 'RES-' . str_pad($booking['id_reservation'], 3, '0', STR_PAD_LEFT),
+            'ref' => $ref,
             'roomId' => (int)$booking['id_salle'],
             'roomName' => $booking['nom_salle'],
             'date' => date('Y-m-d', strtotime($booking['date_debut'])),
@@ -128,6 +162,7 @@ function getBookings($db) {
             'user' => $booking['prenom_user'] . ' ' . $booking['nom_user'],
             'userEmail' => $booking['email_user'],
             'userId' => (int)$booking['id_utilisateur'],
+            'lastAction' => $actionText,
             'options' => $options,
             'created_at' => $booking['created_at'] ?? null,
             'updated_at' => $booking['updated_at'] ?? null
@@ -310,6 +345,7 @@ function createBooking($db) {
             'end' => $end
         ]);
         Logger::info('Booking created', ['booking_id' => $bookingId, 'user_id' => $session['user_id']]);
+        ActivityLogger::log('BOOKING_CREATED', $session, 'reservation', $bookingId, "RES-" . str_pad($bookingId, 3, '0', STR_PAD_LEFT));
 
         jsonResponse([
             'success' => true,
@@ -394,6 +430,7 @@ function updateBooking($db) {
 
         Logger::audit('BOOKING_UPDATED', $session['user_id'], ['booking_id' => $bookingId]);
         Logger::info('Booking updated', ['booking_id' => $bookingId, 'user_id' => $session['user_id']]);
+        ActivityLogger::log('BOOKING_UPDATED', $session, 'reservation', $bookingId, "RES-" . str_pad($bookingId, 3, '0', STR_PAD_LEFT));
 
         jsonResponse(['success' => true, 'message' => 'Reservation mise a jour']);
 
@@ -452,6 +489,7 @@ function deleteBooking($db) {
 
         Logger::audit('BOOKING_CANCELLED', $session['user_id'], ['booking_id' => $bookingId]);
         Logger::info('Booking cancelled', ['booking_id' => $bookingId, 'user_id' => $session['user_id']]);
+        ActivityLogger::log('BOOKING_CANCELLED', $session, 'reservation', $bookingId, "RES-" . str_pad($bookingId, 3, '0', STR_PAD_LEFT));
 
         jsonResponse(['success' => true, 'message' => 'Reservation annulee']);
 

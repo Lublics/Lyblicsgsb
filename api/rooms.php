@@ -212,6 +212,7 @@ function createRoom($db) {
 
         Logger::audit('ROOM_CREATED', $session['user_id'], ['room_id' => $roomId, 'name' => $name]);
         Logger::info('Room created', ['room_id' => $roomId, 'name' => $name, 'user_id' => $session['user_id']]);
+        ActivityLogger::log('ROOM_CREATED', $session, 'salle', $roomId, $name);
 
         jsonResponse([
             'success' => true,
@@ -312,6 +313,7 @@ function updateRoom($db) {
 
         Logger::audit('ROOM_UPDATED', $session['user_id'], ['room_id' => $roomId]);
         Logger::info('Room updated', ['room_id' => $roomId, 'user_id' => $session['user_id']]);
+        ActivityLogger::log('ROOM_UPDATED', $session, 'salle', $roomId, $data['name'] ?? '');
 
         jsonResponse(['success' => true, 'message' => 'Salle mise a jour']);
 
@@ -366,6 +368,7 @@ function deleteRoom($db) {
 
         Logger::audit('ROOM_DELETED', $session['user_id'], ['room_id' => $roomId]);
         Logger::info('Room deleted', ['room_id' => $roomId, 'user_id' => $session['user_id']]);
+        ActivityLogger::log('ROOM_DELETED', $session, 'salle', $roomId, null);
 
         jsonResponse(['success' => true, 'message' => 'Salle supprimee']);
 

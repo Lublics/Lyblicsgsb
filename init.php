@@ -51,7 +51,7 @@ try {
 
     // Supprimer les tables existantes (dans l'ordre des dependances)
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-    $tables = ['Reservation_Option', 'Notification',
+    $tables = ['ActivityLog', 'Reservation_Option', 'Notification',
                'Reservation', 'Salle_Equipement', 'Equipement', 'Option_Service', 'Salle', 'Batiment', 'Utilisateur'];
     foreach ($tables as $table) {
         $pdo->exec("DROP TABLE IF EXISTS `$table`");
@@ -192,6 +192,27 @@ try {
         ) ENGINE=InnoDB
     ");
     output("Table Notification creee", "success");
+
+    // Table ActivityLog
+    $pdo->exec("
+        CREATE TABLE ActivityLog (
+            id_log INT AUTO_INCREMENT PRIMARY KEY,
+            action_type VARCHAR(50) NOT NULL,
+            actor_id INT DEFAULT NULL,
+            actor_name VARCHAR(100) NOT NULL,
+            actor_role VARCHAR(20) NOT NULL,
+            target_type VARCHAR(50) NOT NULL,
+            target_id INT DEFAULT NULL,
+            target_label VARCHAR(255) DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (actor_id) REFERENCES Utilisateur(id_utilisateur) ON UPDATE CASCADE ON DELETE SET NULL,
+            INDEX idx_action (action_type),
+            INDEX idx_actor (actor_id),
+            INDEX idx_date (created_at),
+            INDEX idx_target (target_type, target_id, created_at)
+        ) ENGINE=InnoDB
+    ");
+    output("Table ActivityLog creee", "success");
 
     // ====== INSERTION DES DONNEES DE DEMONSTRATION ======
 

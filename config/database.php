@@ -169,6 +169,33 @@ class Logger {
 }
 
 /**
+ * Classe ActivityLogger - Journalisation des actions en base de donnees
+ */
+class ActivityLogger {
+    public static function log($actionType, $session, $targetType, $targetId = null, $targetLabel = null) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $actorName = ($session['prenom'] ?? '') . ' ' . ($session['nom'] ?? '');
+            $stmt = $db->prepare("
+                INSERT INTO ActivityLog (action_type, actor_id, actor_name, actor_role, target_type, target_id, target_label)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $actionType,
+                $session['user_id'],
+                trim($actorName),
+                $session['role'] ?? 'Employe',
+                $targetType,
+                $targetId,
+                $targetLabel
+            ]);
+        } catch (\Exception $e) {
+            Logger::error('ActivityLogger failed', ['error' => $e->getMessage()]);
+        }
+    }
+}
+
+/**
  * Classe RateLimiter - Protection contre les attaques par force brute
  */
 class RateLimiter {

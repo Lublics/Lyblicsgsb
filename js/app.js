@@ -18,6 +18,9 @@ let buildings = [];
 let currentWeekOffset = 0;
 let currentFilter = 'all';
 let csrfToken = null;
+let logs = [];
+let logsPage = 1;
+let logsTotal = 0;
 
 // ========================================
 // Utilitaires API
@@ -195,7 +198,7 @@ function showApp() {
 
 function showPage(pageName) {
     // Protection : bloquer l'acces aux pages admin pour les non-admins
-    const adminPages = ['admin-rooms', 'admin-users', 'admin-buildings'];
+    const adminPages = ['admin-rooms', 'admin-users', 'admin-buildings', 'admin-logs'];
     if (adminPages.includes(pageName) && (!currentUser || currentUser.role !== 'Admin')) {
         showToast('Acces reserve aux administrateurs', 'error');
         showPage('dashboard');
@@ -235,7 +238,8 @@ function showPage(pageName) {
         mybookings: ['Mes reservations', 'Gerez vos reservations'],
         'admin-rooms': ['Gestion des salles', 'Administration'],
         'admin-users': ['Utilisateurs', 'Administration'],
-        'admin-buildings': ['Batiments', 'Administration']
+        'admin-buildings': ['Batiments', 'Administration'],
+        'admin-logs': ['Logs', 'Journal d\'activite']
     };
 
     if (titles[pageName]) {
@@ -262,6 +266,9 @@ function showPage(pageName) {
             break;
         case 'admin-buildings':
             renderAdminBuildings();
+            break;
+        case 'admin-logs':
+            loadLogs();
             break;
     }
 
@@ -654,6 +661,7 @@ function renderMyBookings() {
                         ${getBookingStatusText(b.status)}
                     </span>
                 </td>
+                <td class="px-6 py-4 text-sm text-dark-200">${escapeHtml(b.lastAction || 'Creee')}</td>
                 <td class="px-6 py-4">
                     ${b.status !== 'cancelled'
                         ? `<button onclick="cancelBooking(${b.id})" class="text-sm text-rose-400 hover:text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded" aria-label="Annuler la reservation ${escapeHtml(b.ref)}">Annuler</button>`
@@ -662,7 +670,7 @@ function renderMyBookings() {
                 </td>
             </tr>
         `).join('')
-        : '<tr><td colspan="6" class="px-6 py-12 text-center text-dark-400">Aucune reservation</td></tr>';
+        : '<tr><td colspan="7" class="px-6 py-12 text-center text-dark-400">Aucune reservation</td></tr>';
 
     document.getElementById('myBookingsTable').innerHTML = rows;
 }
@@ -1393,6 +1401,101 @@ document.addEventListener('DOMContentLoaded', () => {
     checkSession();
 });
 
+// ========================================
+// Administration - Logs
+// ========================================
+
+async function loadLogs(reset = true) {
+    if (reset) {
+        logsPage = 1;
+        logs = [];
+    }
+
+    const filter = document.getElementById('logsFilter')?.value || '';
+    const params = `?page=${logsPage}&limit=50${filter ? '&type=' + encodeURIComponent(filter) : ''}`;
+
+    try {
+        const result = await api(`logs.php${params}`);
+        if (reset) {
+            logs = result.logs;
+        } else {
+            logs = logs.concat(result.logs);
+        }
+        logsTotal = result.total;
+        renderAdminLogs();
+    } catch (error) {
+        showToast('Erreur lors du chargement des logs', 'error');
+    }
+}
+
+function renderAdminLogs() {
+    const actionLabels = {
+        'BOOKING_CREATED': 'Reservation creee',
+        'BOOKING_UPDATED': 'Reservation modifiee',
+        'BOOKING_CANCELLED': 'Reservation annulee',
+        'ROOM_CREATED': 'Salle creee',
+        'ROOM_UPDATED': 'Salle modifiee',
+        'ROOM_DELETED': 'Salle supprimee',
+        'USER_CREATED': 'Utilisateur cree',
+        'USER_UPDATED': 'Utilisateur modifie',
+        'USER_DELETED': 'Utilisateur supprime',
+        'BUILDING_CREATED': 'Batiment cree',
+        'BUILDING_UPDATED': 'Batiment modifie',
+        'BUILDING_DELETED': 'Batiment supprime'
+    };
+
+    const actionColors = {
+        'CREATED': 'bg-emerald-500/20 text-emerald-400',
+        'UPDATED': 'bg-primary-500/20 text-primary-400',
+        'CANCELLED': 'bg-rose-500/20 text-rose-400',
+        'DELETED': 'bg-rose-500/20 text-rose-400'
+    };
+
+    const rows = logs.length
+        ? logs.map(log => {
+            const actionSuffix = log.action.split('_').pop();
+            const colorClass = actionColors[actionSuffix] || 'bg-dark-600 text-dark-300';
+            const label = actionLabels[log.action] || log.action;
+            const dateStr = new Date(log.date.replace(' ', 'T')).toLocaleString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            return `
+                <tr class="hover:bg-dark-800/30">
+                    <td class="px-6 py-4 text-sm text-dark-300">${dateStr}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-white">${escapeHtml(log.actorName)}</span>
+                            <span class="px-1.5 py-0.5 text-xs rounded ${log.actorRole === 'Admin' ? 'bg-violet-500/20 text-violet-400' : 'bg-dark-600 text-dark-300'}">${escapeHtml(log.actorRole)}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 text-xs font-medium rounded-full ${colorClass}">${escapeHtml(label)}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-dark-200">${log.targetLabel ? escapeHtml(log.targetLabel) : '-'}</td>
+                </tr>
+            `;
+        }).join('')
+        : '<tr><td colspan="4" class="px-6 py-12 text-center text-dark-400">Aucun log</td></tr>';
+
+    document.getElementById('adminLogsTable').innerHTML = rows;
+
+    const loadMoreBtn = document.getElementById('logsLoadMore');
+    if (loadMoreBtn) {
+        loadMoreBtn.classList.toggle('hidden', logs.length >= logsTotal);
+    }
+}
+
+function filterLogs() {
+    loadLogs(true);
+}
+
+function loadMoreLogs() {
+    logsPage++;
+    loadLogs(false);
+}
+
 // Export pour utilisation globale
 window.showAuthForm = showAuthForm;
 window.handleLogout = handleLogout;
@@ -1413,3 +1516,5 @@ window.openEditUser = openEditUser;
 window.deleteUser = deleteUser;
 window.openEditBuilding = openEditBuilding;
 window.deleteBuilding = deleteBuilding;
+window.filterLogs = filterLogs;
+window.loadMoreLogs = loadMoreLogs;
