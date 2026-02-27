@@ -83,6 +83,7 @@ function getOption($db, $id) {
  */
 function createOption($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -129,6 +130,7 @@ function createOption($db) {
  */
 function updateOption($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -182,6 +184,7 @@ function updateOption($db) {
  */
 function deleteOption($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 

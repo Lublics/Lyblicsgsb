@@ -158,6 +158,7 @@ function getRoom($db, $id) {
  */
 function createRoom($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -230,6 +231,7 @@ function createRoom($db) {
  */
 function updateRoom($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -325,6 +327,7 @@ function updateRoom($db) {
  */
 function deleteRoom($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 

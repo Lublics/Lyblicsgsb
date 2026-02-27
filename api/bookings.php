@@ -183,6 +183,7 @@ function getBooking($db, $id) {
  */
 function createBooking($db) {
     $session = checkAuth();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -279,18 +280,15 @@ function createBooking($db) {
                 $optionName = sanitizeString($optionName);
                 if (empty($optionName)) continue;
 
-                // Recuperer ou creer l'option
+                // Recuperer l'option (ne pas creer dynamiquement)
                 $stmt = $db->prepare("SELECT id_option FROM Option_Service WHERE libelle_option = ?");
                 $stmt->execute([$optionName]);
                 $option = $stmt->fetch();
 
                 if (!$option) {
-                    $stmt = $db->prepare("INSERT INTO Option_Service (libelle_option) VALUES (?)");
-                    $stmt->execute([$optionName]);
-                    $optionId = $db->lastInsertId();
-                } else {
-                    $optionId = $option['id_option'];
+                    continue; // Ignorer les options inconnues
                 }
+                $optionId = $option['id_option'];
 
                 // Lier l'option a la reservation
                 $stmt = $db->prepare("INSERT INTO Reservation_Option (id_reservation, id_option) VALUES (?, ?)");
@@ -333,6 +331,7 @@ function createBooking($db) {
  */
 function updateBooking($db) {
     $session = checkAuth();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -410,6 +409,7 @@ function updateBooking($db) {
  */
 function deleteBooking($db) {
     $session = checkAuth();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 

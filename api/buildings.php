@@ -104,6 +104,7 @@ function getBuilding($db, $id) {
  */
 function createBuilding($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -143,6 +144,7 @@ function createBuilding($db) {
  */
 function updateBuilding($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -201,6 +203,7 @@ function updateBuilding($db) {
  */
 function deleteBuilding($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 

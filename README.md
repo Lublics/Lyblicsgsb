@@ -13,8 +13,8 @@ Systeme de gestion de reservations de salles de reunion pour GSB (Galaxy Swiss B
 
 ## Prerequis
 
-- PHP 7.4 ou superieur
-- MySQL 5.7 ou superieur
+- PHP 8.2 ou superieur
+- MySQL 8.0 ou superieur
 - Serveur web (Apache/Nginx)
 - Extension PHP PDO MySQL
 

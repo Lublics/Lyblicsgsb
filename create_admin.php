@@ -13,7 +13,7 @@ try {
     $nom = 'Admin';
     $prenom = 'Test';
     $email = 'test.admin@gsb.local';
-    $password = 'Test1234@';
+    $password = 'Test1234@Admin';
     $role = 'Admin';
 
     // Hash du mot de passe

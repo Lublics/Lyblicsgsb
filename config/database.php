@@ -467,6 +467,16 @@ function checkAdmin() {
 }
 
 /**
+ * Verifie le token CSRF pour les requetes de mutation (POST/PUT/DELETE)
+ */
+function verifyCsrf() {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($token) || !CSRF::verifyToken($token)) {
+        jsonResponse(['error' => 'Token CSRF invalide'], 403);
+    }
+}
+
+/**
  * Sanitize une chaine de caracteres
  */
 function sanitizeString($input) {

@@ -34,7 +34,6 @@ node_modules/
 
 # Fichiers sensibles
 config/database.local.php
-*.sql
 *.bak
 
 # Tests

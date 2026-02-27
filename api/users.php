@@ -101,6 +101,7 @@ function getUser($db, $id) {
  */
 function createUser($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -181,6 +182,7 @@ function createUser($db) {
  */
 function updateUser($db) {
     $session = checkAuth();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -280,9 +282,9 @@ function updateUser($db) {
 
         // Mettre a jour la session si c'est l'utilisateur courant
         if ($session['user_id'] == $userId) {
-            if (isset($data['nom'])) $_SESSION['nom'] = $data['nom'];
-            if (isset($data['prenom'])) $_SESSION['prenom'] = $data['prenom'];
-            if (isset($data['email'])) $_SESSION['email'] = $data['email'];
+            if (isset($data['nom'])) $_SESSION['nom'] = sanitizeString($data['nom']);
+            if (isset($data['prenom'])) $_SESSION['prenom'] = sanitizeString($data['prenom']);
+            if (isset($data['email'])) $_SESSION['email'] = sanitizeString($data['email']);
         }
 
         Logger::audit('USER_UPDATED', $session['user_id'], ['target_user_id' => $userId]);
@@ -301,6 +303,7 @@ function updateUser($db) {
  */
 function deleteUser($db) {
     $session = checkAdmin();
+    verifyCsrf();
 
     $data = json_decode(file_get_contents('php://input'), true);
 

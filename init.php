@@ -51,8 +51,8 @@ try {
 
     // Supprimer les tables existantes (dans l'ordre des dependances)
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-    $tables = ['Creer', 'Envoie_Rappel', 'Configurer', 'Reservation_Option', 'Notification',
-               'Reservation', 'Salle_Equipement', 'Equipement', 'Salle', 'Option_Service', 'Utilisateur'];
+    $tables = ['Reservation_Option', 'Notification',
+               'Reservation', 'Salle_Equipement', 'Equipement', 'Salle', 'Batiment', 'Option_Service', 'Utilisateur'];
     foreach ($tables as $table) {
         $pdo->exec("DROP TABLE IF EXISTS `$table`");
     }
@@ -78,6 +78,17 @@ try {
     ");
     output("Table Utilisateur creee", "success");
 
+    // Table Batiment
+    $pdo->exec("
+        CREATE TABLE Batiment (
+            id_batiment INT AUTO_INCREMENT PRIMARY KEY,
+            nom_batiment VARCHAR(100) NOT NULL,
+            adresse_batiment VARCHAR(255),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB
+    ");
+    output("Table Batiment creee", "success");
+
     // Table Salle
     $pdo->exec("
         CREATE TABLE Salle (
@@ -86,10 +97,13 @@ try {
             description_salle VARCHAR(255),
             capacite_salle INT NOT NULL CHECK (capacite_salle > 0 AND capacite_salle <= 500),
             etat_salle ENUM('Disponible', 'Occupee', 'Maintenance') NOT NULL DEFAULT 'Disponible',
+            id_batiment INT DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_batiment) REFERENCES Batiment(id_batiment) ON UPDATE CASCADE ON DELETE SET NULL,
             INDEX idx_etat (etat_salle),
-            INDEX idx_capacite (capacite_salle)
+            INDEX idx_capacite (capacite_salle),
+            INDEX idx_batiment (id_batiment)
         ) ENGINE=InnoDB
     ");
     output("Table Salle creee", "success");
@@ -199,6 +213,18 @@ try {
     }
     output(count($equipments) . " equipements crees", "success");
 
+    // Batiments
+    $stmtBat = $pdo->prepare("INSERT INTO Batiment (nom_batiment, adresse_batiment) VALUES (?, ?)");
+    $batiments = [
+        ['Batiment A - Siege', '12 rue de la Sante, 75013 Paris'],
+        ['Batiment B - Annexe', '45 avenue des Sciences, 75013 Paris'],
+        ['Batiment C - Centre de formation', '8 boulevard Pasteur, 75015 Paris']
+    ];
+    foreach ($batiments as $bat) {
+        $stmtBat->execute($bat);
+    }
+    output(count($batiments) . " batiments crees", "success");
+
     // Utilisateurs (mot de passe securise: Admin123!@#)
     $securePassword = password_hash('Admin123!@#', PASSWORD_DEFAULT, ['cost' => 12]);
 
@@ -218,17 +244,17 @@ try {
     output(count($users) . " utilisateurs crees", "success");
 
     // Salles
-    $stmt = $pdo->prepare("INSERT INTO Salle (nom_salle, description_salle, capacite_salle, etat_salle) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO Salle (nom_salle, description_salle, capacite_salle, etat_salle, id_batiment) VALUES (?, ?, ?, ?, ?)");
 
     $rooms = [
-        ['Salle Einstein', 'Etage 1 - Salle de reunion moderne avec vue sur le jardin', 8, 'Disponible'],
-        ['Salle Newton', 'Etage 1 - Grande salle ideale pour les formations', 12, 'Disponible'],
-        ['Salle Curie', 'Etage 2 - Espace intimiste pour petites reunions', 6, 'Disponible'],
-        ['Salle Darwin', 'Etage 2 - Salle de conference principale', 20, 'Disponible'],
-        ['Salle Tesla', 'Etage 3 - Petit bureau pour reunions rapides', 4, 'Maintenance'],
-        ['Salle Pasteur', 'RDC - Salle polyvalente', 15, 'Disponible'],
-        ['Salle Turing', 'Etage 3 - Salle high-tech avec equipement dernier cri', 10, 'Disponible'],
-        ['Salle Hawking', 'Etage 1 - Auditorium pour grandes presentations', 25, 'Disponible']
+        ['Salle Einstein', 'Etage 1 - Salle de reunion moderne avec vue sur le jardin', 8, 'Disponible', 1],
+        ['Salle Newton', 'Etage 1 - Grande salle ideale pour les formations', 12, 'Disponible', 1],
+        ['Salle Curie', 'Etage 2 - Espace intimiste pour petites reunions', 6, 'Disponible', 2],
+        ['Salle Darwin', 'Etage 2 - Salle de conference principale', 20, 'Disponible', 2],
+        ['Salle Tesla', 'Etage 3 - Petit bureau pour reunions rapides', 4, 'Maintenance', 3],
+        ['Salle Pasteur', 'RDC - Salle polyvalente', 15, 'Disponible', 3],
+        ['Salle Turing', 'Etage 3 - Salle high-tech avec equipement dernier cri', 10, 'Disponible', 3],
+        ['Salle Hawking', 'Etage 1 - Auditorium pour grandes presentations', 25, 'Disponible', 1]
     ];
 
     foreach ($rooms as $room) {
@@ -266,6 +292,7 @@ try {
         ['WiFi', 'Code d\'acces WiFi invite'],
         ['Machine a cafe', 'Capsules et gobelets fournis'],
         ['Petit dejeuner', 'Viennoiseries et boissons chaudes'],
+        ['Dejeuner', 'Plateau repas et boissons'],
         ['Climatisation', 'Reglage de la temperature'],
         ['Ecran interactif', 'Configuration de l\'ecran tactile']
     ];
