@@ -795,6 +795,7 @@ function confirmAction(title, message, actionLabel = 'Supprimer') {
 
         const actionBtn = document.getElementById('confirm-action-btn');
         const cancelBtn = document.getElementById('confirm-cancel-btn');
+        const closeBtn = document.getElementById('confirm-close-btn');
 
         function cleanup() {
             modal.classList.add('hidden');
@@ -802,6 +803,7 @@ function confirmAction(title, message, actionLabel = 'Supprimer') {
             modal.setAttribute('aria-hidden', 'true');
             actionBtn.removeEventListener('click', onConfirm);
             cancelBtn.removeEventListener('click', onCancel);
+            closeBtn.removeEventListener('click', onCancel);
             modal.removeEventListener('keydown', onKey);
         }
 
@@ -813,6 +815,7 @@ function confirmAction(title, message, actionLabel = 'Supprimer') {
 
         actionBtn.addEventListener('click', onConfirm);
         cancelBtn.addEventListener('click', onCancel);
+        closeBtn.addEventListener('click', onCancel);
         modal.addEventListener('keydown', onKey);
         cancelBtn.focus();
     });
@@ -1102,13 +1105,17 @@ async function handleBookingSubmit(event) {
     const btn = document.getElementById('bookingSubmitBtn');
     setButtonLoading(btn, true);
 
+    const selectedExtras = Array.from(document.querySelectorAll('input[name="extras"]:checked'))
+        .map(cb => cb.value);
+
     try {
         await api('bookings.php', 'POST', {
             roomId: parseInt(document.getElementById('bookingRoom').value),
             date: document.getElementById('bookingDate').value,
             start: document.getElementById('bookingStart').value,
             end: document.getElementById('bookingEnd').value,
-            subject: document.getElementById('bookingSubject').value
+            subject: document.getElementById('bookingSubject').value,
+            options: selectedExtras
         });
 
         showToast('Reservation creee avec succes', 'success');
