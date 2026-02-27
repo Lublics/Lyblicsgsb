@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GSB Reservation - Systeme de gestion des salles de reunion">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>GSB Reservation - Gestion des salles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            dark: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
+          },
+          animation: { 'fade-in': 'fadeIn 0.3s ease-out', 'slide-up': 'slideUp 0.4s ease-out', 'slide-in': 'slideIn 0.3s ease-out' },
+          keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, slideIn: { '0%': { opacity: '0', transform: 'translateX(-10px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } } }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+    .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(8px); }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 12px 40px -12px rgba(0,0,0,0.4); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.3s ease-out; }
+    .nav-item { color: #94a3b8; }
+    .nav-item:hover { background: rgba(30, 41, 59, 0.5); color: #e2e8f0; }
+    .nav-item.active { background: rgba(14, 165, 233, 0.1); color: #38bdf8; }
+    .booking-filter { background: transparent; color: #94a3b8; }
+    .booking-filter:hover { background: rgba(30, 41, 59, 0.5); color: #e2e8f0; }
+    .booking-filter.active { background: rgba(14, 165, 233, 0.1); color: #38bdf8; }
+    .loader { border: 3px solid rgba(14, 165, 233, 0.2); border-top-color: #0ea5e9; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Skip link for accessibility */
+    .skip-link { position: absolute; top: -40px; left: 0; background: #0ea5e9; color: white; padding: 8px 16px; z-index: 100; transition: top 0.3s; }
+    .skip-link:focus { top: 0; }
+  </style>
+</head>
+<body class="bg-dark-950 text-dark-100 font-sans antialiased min-h-screen">
+  <!-- Skip link for accessibility -->
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+
+  <!-- AUTH -->
+  <div id="authContainer" class="min-h-screen flex" role="main" aria-label="Authentification">
+    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-dark-900 via-dark-950 to-dark-900 relative overflow-hidden" aria-hidden="true">
+      <div class="relative z-10 flex flex-col justify-center px-16">
+        <div class="flex items-center gap-3 mb-8">
+          <img src="favicon.svg" alt="GSB Logo" class="w-12 h-12">
+          <span class="text-2xl font-bold text-white">GSB Reservation</span>
+        </div>
+        <h1 class="text-4xl font-bold text-white mb-4">Gerez vos salles de reunion</h1>
+        <p class="text-dark-400 text-lg">Reservez et planifiez vos espaces de travail en toute simplicite.</p>
+      </div>
+    </div>
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div class="w-full max-w-md">
+        <div id="loginForm" class="auth-form" aria-hidden="false">
+          <h2 class="text-2xl font-bold mb-2" id="login-title">Connexion</h2>
+          <p class="text-dark-400 mb-8">Accedez a votre espace de reservation</p>
+          <form id="loginFormEl" class="space-y-5" aria-labelledby="login-title">
+            <div>
+              <label for="loginEmail" class="block text-sm font-medium text-dark-300 mb-2">Email</label>
+              <input type="email" id="loginEmail" name="email" required placeholder="vous@gsb.local" autocomplete="email" class="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white placeholder-dark-500" aria-required="true">
+            </div>
+            <div>
+              <label for="loginPassword" class="block text-sm font-medium text-dark-300 mb-2">Mot de passe</label>
+              <input type="password" id="loginPassword" name="password" required placeholder="Votre mot de passe" autocomplete="current-password" class="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white placeholder-dark-500" aria-required="true">
+            </div>
+            <button type="submit" id="loginBtn" class="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+              <span>Se connecter</span>
+            </button>
+          </form>
+          <p class="mt-8 text-center text-dark-400">
+            Pas de compte ? <button onclick="showAuthForm('register')" class="text-primary-400 hover:text-primary-300 font-medium focus:outline-none focus:underline">Creer un compte</button>
+          </p>
+        </div>
+        <div id="registerForm" class="auth-form hidden" aria-hidden="true">
+          <h2 class="text-2xl font-bold mb-2" id="register-title">Creer un compte</h2>
+          <p class="text-dark-400 mb-8">Rejoignez GSB Reservation</p>
+          <form id="registerFormEl" class="space-y-5" aria-labelledby="register-title">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="registerNom" class="block text-sm font-medium text-dark-300 mb-2">Nom</label>
+                <input type="text" id="registerNom" name="nom" required autocomplete="family-name" class="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white" aria-required="true">
+              </div>
+              <div>
+                <label for="registerPrenom" class="block text-sm font-medium text-dark-300 mb-2">Prenom</label>
+                <input type="text" id="registerPrenom" name="prenom" required autocomplete="given-name" class="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white" aria-required="true">
+              </div>
+            </div>
+            <div>
+              <label for="registerEmail" class="block text-sm font-medium text-dark-300 mb-2">Email</label>
+              <input type="email" id="registerEmail" name="email" required autocomplete="email" class="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white" aria-required="true">
+            </div>
+            <div>
+              <label for="registerPassword" class="block text-sm font-medium text-dark-300 mb-2">Mot de passe</label>
+              <input type="password" id="registerPassword" name="password" required autocomplete="new-password" minlength="12" class="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white" aria-required="true" aria-describedby="password-requirements">
+              <p id="password-requirements" class="text-xs text-dark-500 mt-2">Minimum 12 caracteres avec majuscule, minuscule, chiffre et caractere special</p>
+            </div>
+            <button type="submit" id="registerBtn" class="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+              <span>Creer mon compte</span>
+            </button>
+          </form>
+          <p class="mt-8 text-center text-dark-400">
+            Deja un compte ? <button onclick="showAuthForm('login')" class="text-primary-400 font-medium focus:outline-none focus:underline">Se connecter</button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="appContainer" class="hidden min-h-screen" aria-hidden="true">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 w-64 bg-dark-900/95 border-r border-dark-800 z-40 transform transition-transform lg:translate-x-0 -translate-x-full" role="navigation" aria-label="Navigation principale" aria-hidden="true">
+      <div class="flex flex-col h-full">
+        <div class="p-6 border-b border-dark-800">
+          <div class="flex items-center gap-3">
+            <img src="favicon.svg" alt="GSB Logo" class="w-10 h-10">
+            <div><span class="text-lg font-bold text-white">GSB</span><span class="text-xs text-dark-400 block">Reservation</span></div>
+          </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto" role="menubar">
+          <button onclick="showPage('dashboard')" data-page="dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem" aria-current="page">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="showPage('rooms')" data-page="rooms" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <span>Salles</span>
+          </button>
+          <button onclick="showPage('calendar')" data-page="calendar" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span>Planning</span>
+          </button>
+          <button onclick="showPage('mybookings')" data-page="mybookings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            <span>Mes reservations</span>
+          </button>
+          <div id="adminNav" class="hidden">
+            <div class="pt-4 mt-4 border-t border-dark-800"><span class="px-4 text-xs font-semibold text-dark-500 uppercase">Administration</span></div>
+            <button onclick="showPage('admin-rooms')" data-page="admin-rooms" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              <span>Gerer salles</span>
+            </button>
+            <button onclick="showPage('admin-users')" data-page="admin-users" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              <span>Utilisateurs</span>
+            </button>
+            <button onclick="showPage('admin-buildings')" data-page="admin-buildings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left" role="menuitem">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              <span>Batiments</span>
+            </button>
+          </div>
+        </nav>
+        <div class="p-4 border-t border-dark-800">
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-dark-800/50">
+            <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center text-white font-semibold" aria-hidden="true">??</div>
+            <div class="flex-1 min-w-0">
+              <p id="userName" class="text-sm font-medium text-white truncate">...</p>
+              <p id="userRole" class="text-xs text-dark-400">-</p>
+            </div>
+            <button onclick="handleLogout()" class="p-2 hover:bg-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" title="Deconnexion" aria-label="Se deconnecter">
+              <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <header class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-dark-900/95 border-b border-dark-800 z-30 flex items-center px-4">
+      <button onclick="toggleSidebar()" class="p-2 hover:bg-dark-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="sidebar">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ml-3 font-semibold">GSB Reservation</span>
+    </header>
+    <main id="main-content" class="lg:ml-64 pt-16 lg:pt-0 min-h-screen" role="main">
+      <div class="sticky top-0 z-20 bg-dark-950/80 backdrop-blur-xl border-b border-dark-800">
+        <div class="flex items-center justify-between px-6 py-4">
+          <div>
+            <h1 id="pageTitle" class="text-xl font-semibold text-white">Dashboard</h1>
+            <p id="pageSubtitle" class="text-sm text-dark-400">Bienvenue</p>
+          </div>
+          <button onclick="openModal('booking')" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-950" aria-label="Creer une nouvelle reservation">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span class="hidden sm:inline">Reserver</span>
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div id="page-dashboard" class="page active" aria-hidden="false">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="statsCards" role="region" aria-label="Statistiques"></div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+              <h2 class="text-lg font-semibold text-white mb-4">Salles disponibles</h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="availableRoomsGrid" role="list" aria-label="Liste des salles disponibles"></div>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white mb-4">Planning du jour</h2>
+              <div class="glass-card rounded-2xl border border-dark-700/50 p-4 space-y-3" id="todaySchedule" role="list" aria-label="Reservations du jour"></div>
+            </div>
+          </div>
+        </div>
+        <div id="page-rooms" class="page" aria-hidden="true">
+          <div class="glass-card rounded-2xl border border-dark-700/50 p-4 mb-6" role="search">
+            <div class="flex flex-wrap gap-4">
+              <div class="flex-1 min-w-[200px] relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="search" id="searchRooms" placeholder="Rechercher une salle..." class="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white" onkeyup="filterRooms()" aria-label="Rechercher une salle">
+              </div>
+              <select id="filterCapacity" onchange="filterRooms()" class="px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-label="Filtrer par capacite">
+                <option value="">Toutes capacites</option>
+                <option value="small">1-6 personnes</option>
+                <option value="medium">7-15 personnes</option>
+                <option value="large">16+ personnes</option>
+              </select>
+              <select id="filterStatus" onchange="filterRooms()" class="px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-label="Filtrer par etat">
+                <option value="">Tous etats</option>
+                <option value="available">Disponible</option>
+                <option value="occupied">Occupee</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+            <div class="mt-4">
+              <p class="text-sm font-medium text-dark-300 mb-2">Filtrer par equipement</p>
+              <div class="flex flex-wrap gap-2" id="filterEquipment" role="group" aria-label="Filtrer par equipement"></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="roomsGrid" role="list" aria-label="Liste des salles"></div>
+        </div>
+        <div id="page-calendar" class="page" aria-hidden="true">
+          <div class="glass-card rounded-2xl border border-dark-700/50 p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-4">
+                <button onclick="changeWeek(-1)" class="p-2 hover:bg-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Semaine precedente">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <h2 id="calendarTitle" class="text-lg font-semibold text-white" aria-live="polite"></h2>
+                <button onclick="changeWeek(1)" class="p-2 hover:bg-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Semaine suivante">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <button onclick="goToToday()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500">Aujourd'hui</button>
+            </div>
+            <div class="grid grid-cols-8 rounded-xl overflow-hidden border border-dark-700/50" id="calendarGrid" role="grid" aria-label="Calendrier des reservations"></div>
+          </div>
+        </div>
+        <div id="page-mybookings" class="page" aria-hidden="true">
+          <div class="flex items-center gap-4 mb-6" role="tablist" aria-label="Filtrer les reservations">
+            <button onclick="filterMyBookings('all')" class="booking-filter active px-4 py-2 rounded-xl text-sm font-medium" role="tab" aria-selected="true" aria-pressed="true">Toutes</button>
+            <button onclick="filterMyBookings('confirmed')" class="booking-filter px-4 py-2 rounded-xl text-sm font-medium" role="tab" aria-selected="false" aria-pressed="false">Confirmees</button>
+            <button onclick="filterMyBookings('pending')" class="booking-filter px-4 py-2 rounded-xl text-sm font-medium" role="tab" aria-selected="false" aria-pressed="false">En attente</button>
+            <button onclick="filterMyBookings('cancelled')" class="booking-filter px-4 py-2 rounded-xl text-sm font-medium" role="tab" aria-selected="false" aria-pressed="false">Annulees</button>
+          </div>
+          <div class="glass-card rounded-2xl border border-dark-700/50 overflow-hidden overflow-x-auto">
+            <table class="w-full" role="table">
+              <thead class="bg-dark-800/50">
+                <tr>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Ref</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Salle</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Date</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Horaire</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Statut</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark-700/50" id="myBookingsTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="page-admin-rooms" class="page" aria-hidden="true">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-white">Gestion des salles</h2>
+            <button onclick="openModal('addRoom')" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Ajouter
+            </button>
+          </div>
+          <div class="glass-card rounded-2xl border border-dark-700/50 overflow-hidden overflow-x-auto">
+            <table class="w-full" role="table">
+              <thead class="bg-dark-800/50">
+                <tr>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Salle</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Capacite</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Etat</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark-700/50" id="adminRoomsTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="page-admin-users" class="page" aria-hidden="true">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-white">Utilisateurs</h2>
+            <button onclick="openModal('addUser')" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Ajouter
+            </button>
+          </div>
+          <div class="glass-card rounded-2xl border border-dark-700/50 overflow-hidden overflow-x-auto">
+            <table class="w-full" role="table">
+              <thead class="bg-dark-800/50">
+                <tr>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Nom</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Email</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Role</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark-700/50" id="adminUsersTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="page-admin-buildings" class="page" aria-hidden="true">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-white">Gestion des batiments</h2>
+            <button onclick="openModal('addBuilding')" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Ajouter
+            </button>
+          </div>
+          <div class="glass-card rounded-2xl border border-dark-700/50 overflow-hidden overflow-x-auto">
+            <table class="w-full" role="table">
+              <thead class="bg-dark-800/50">
+                <tr>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Batiment</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Adresse</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Salles</th>
+                  <th scope="col" class="text-left px-6 py-4 text-sm font-semibold text-dark-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark-700/50" id="adminBuildingsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-dark-950/80 z-30 lg:hidden hidden" aria-hidden="true"></div>
+  </div>
+
+  <!-- MODAL BOOKING -->
+  <div id="modal-booking" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-booking-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('booking')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-2xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700 sticky top-0 bg-dark-900">
+        <h3 id="modal-booking-title" class="text-xl font-semibold text-white">Nouvelle reservation</h3>
+        <button onclick="closeModal('booking')" class="p-2 hover:bg-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="bookingFormEl" class="p-6 space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="bookingRoom" class="block text-sm font-medium text-dark-300 mb-2">Salle</label>
+            <select id="bookingRoom" name="room" required class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-required="true"></select>
+          </div>
+          <div>
+            <label for="bookingDate" class="block text-sm font-medium text-dark-300 mb-2">Date</label>
+            <input type="date" id="bookingDate" name="date" required class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-required="true">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="bookingStart" class="block text-sm font-medium text-dark-300 mb-2">Heure de debut</label>
+            <input type="time" id="bookingStart" name="start" required class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-required="true">
+          </div>
+          <div>
+            <label for="bookingEnd" class="block text-sm font-medium text-dark-300 mb-2">Heure de fin</label>
+            <input type="time" id="bookingEnd" name="end" required class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-required="true">
+          </div>
+        </div>
+        <div>
+          <label for="bookingSubject" class="block text-sm font-medium text-dark-300 mb-2">Objet de la reunion</label>
+          <input type="text" id="bookingSubject" name="subject" required placeholder="Ex: Reunion d'equipe" minlength="3" maxlength="100" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white placeholder-dark-500" aria-required="true">
+        </div>
+        <fieldset>
+          <legend class="block text-sm font-medium text-dark-300 mb-3">Extras repas</legend>
+          <div class="grid grid-cols-2 gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl" id="bookingMealOptions" role="group"></div>
+        </fieldset>
+        <fieldset>
+          <legend class="block text-sm font-medium text-dark-300 mb-3">Options et services</legend>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="bookingOptions" role="group"></div>
+        </fieldset>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('booking')" class="px-6 py-2.5 bg-dark-700 hover:bg-dark-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-dark-500">Annuler</button>
+          <button type="submit" id="bookingSubmitBtn" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <span>Creer</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ADD ROOM -->
+  <div id="modal-addRoom" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-addRoom-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('addRoom')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700">
+        <h3 id="modal-addRoom-title" class="text-xl font-semibold text-white">Ajouter une salle</h3>
+        <button onclick="closeModal('addRoom')" class="p-2 hover:bg-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="addRoomFormEl" class="p-6 space-y-5">
+        <div>
+          <label for="roomName" class="block text-sm font-medium text-dark-300 mb-2">Nom de la salle</label>
+          <input type="text" id="roomName" name="name" required minlength="2" maxlength="50" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-required="true">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="roomCapacity" class="block text-sm font-medium text-dark-300 mb-2">Capacite</label>
+            <input type="number" id="roomCapacity" name="capacity" required min="1" max="500" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-required="true">
+          </div>
+          <div>
+            <label for="roomFloor" class="block text-sm font-medium text-dark-300 mb-2">Etage</label>
+            <select id="roomFloor" name="floor" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+              <option value="0">RDC</option>
+              <option value="1">1er etage</option>
+              <option value="2">2eme etage</option>
+              <option value="3">3eme etage</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="roomBuilding" class="block text-sm font-medium text-dark-300 mb-2">Batiment</label>
+          <select id="roomBuilding" name="building" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" aria-label="Choisir un batiment">
+            <option value="">-- Aucun --</option>
+          </select>
+        </div>
+        <div>
+          <label for="roomDescription" class="block text-sm font-medium text-dark-300 mb-2">Description</label>
+          <textarea id="roomDescription" name="description" rows="2" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white resize-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('addRoom')" class="px-6 py-2.5 bg-dark-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-dark-500">Annuler</button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT ROOM -->
+  <div id="modal-editRoom" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-editRoom-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('editRoom')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700">
+        <h3 id="modal-editRoom-title" class="text-xl font-semibold text-white">Modifier la salle</h3>
+        <button onclick="closeModal('editRoom')" class="p-2 hover:bg-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="editRoomFormEl" class="p-6 space-y-5">
+        <input type="hidden" id="editRoomId">
+        <div>
+          <label for="editRoomName" class="block text-sm font-medium text-dark-300 mb-2">Nom de la salle</label>
+          <input type="text" id="editRoomName" required minlength="2" maxlength="50" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="editRoomCapacity" class="block text-sm font-medium text-dark-300 mb-2">Capacite</label>
+            <input type="number" id="editRoomCapacity" required min="1" max="500" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+          </div>
+          <div>
+            <label for="editRoomFloor" class="block text-sm font-medium text-dark-300 mb-2">Etage</label>
+            <select id="editRoomFloor" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+              <option value="0">RDC</option>
+              <option value="1">1er etage</option>
+              <option value="2">2eme etage</option>
+              <option value="3">3eme etage</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="editRoomBuilding" class="block text-sm font-medium text-dark-300 mb-2">Batiment</label>
+          <select id="editRoomBuilding" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+            <option value="">-- Aucun --</option>
+          </select>
+        </div>
+        <div>
+          <label for="editRoomDescription" class="block text-sm font-medium text-dark-300 mb-2">Description</label>
+          <textarea id="editRoomDescription" rows="2" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white resize-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('editRoom')" class="px-6 py-2.5 bg-dark-700 text-white rounded-xl">Annuler</button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ADD USER -->
+  <div id="modal-addUser" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-addUser-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('addUser')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700">
+        <h3 id="modal-addUser-title" class="text-xl font-semibold text-white">Ajouter un utilisateur</h3>
+        <button onclick="closeModal('addUser')" class="p-2 hover:bg-dark-700 rounded-lg" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="addUserFormEl" class="p-6 space-y-5">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="addUserNom" class="block text-sm font-medium text-dark-300 mb-2">Nom</label>
+            <input type="text" id="addUserNom" required minlength="2" maxlength="50" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+          </div>
+          <div>
+            <label for="addUserPrenom" class="block text-sm font-medium text-dark-300 mb-2">Prenom</label>
+            <input type="text" id="addUserPrenom" required minlength="2" maxlength="50" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+          </div>
+        </div>
+        <div>
+          <label for="addUserEmail" class="block text-sm font-medium text-dark-300 mb-2">Email</label>
+          <input type="email" id="addUserEmail" required class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+        </div>
+        <div>
+          <label for="addUserPassword" class="block text-sm font-medium text-dark-300 mb-2">Mot de passe</label>
+          <input type="password" id="addUserPassword" required minlength="12" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+          <p class="text-xs text-dark-500 mt-1">Min. 12 caracteres, majuscule, minuscule, chiffre, caractere special</p>
+        </div>
+        <div>
+          <label for="addUserRole" class="block text-sm font-medium text-dark-300 mb-2">Role</label>
+          <select id="addUserRole" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+            <option value="Employe">Employe</option>
+            <option value="Delegue">Delegue</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('addUser')" class="px-6 py-2.5 bg-dark-700 text-white rounded-xl">Annuler</button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT USER -->
+  <div id="modal-editUser" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-editUser-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('editUser')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700">
+        <h3 id="modal-editUser-title" class="text-xl font-semibold text-white">Modifier l'utilisateur</h3>
+        <button onclick="closeModal('editUser')" class="p-2 hover:bg-dark-700 rounded-lg" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="editUserFormEl" class="p-6 space-y-5">
+        <input type="hidden" id="editUserId">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="editUserNom" class="block text-sm font-medium text-dark-300 mb-2">Nom</label>
+            <input type="text" id="editUserNom" required minlength="2" maxlength="50" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+          </div>
+          <div>
+            <label for="editUserPrenom" class="block text-sm font-medium text-dark-300 mb-2">Prenom</label>
+            <input type="text" id="editUserPrenom" required minlength="2" maxlength="50" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+          </div>
+        </div>
+        <div>
+          <label for="editUserEmail" class="block text-sm font-medium text-dark-300 mb-2">Email</label>
+          <input type="email" id="editUserEmail" required class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+        </div>
+        <div>
+          <label for="editUserRole" class="block text-sm font-medium text-dark-300 mb-2">Role</label>
+          <select id="editUserRole" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+            <option value="Employe">Employe</option>
+            <option value="Delegue">Delegue</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('editUser')" class="px-6 py-2.5 bg-dark-700 text-white rounded-xl">Annuler</button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ADD BUILDING -->
+  <div id="modal-addBuilding" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-addBuilding-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('addBuilding')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700">
+        <h3 id="modal-addBuilding-title" class="text-xl font-semibold text-white">Ajouter un batiment</h3>
+        <button onclick="closeModal('addBuilding')" class="p-2 hover:bg-dark-700 rounded-lg" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="addBuildingFormEl" class="p-6 space-y-5">
+        <div>
+          <label for="addBuildingName" class="block text-sm font-medium text-dark-300 mb-2">Nom du batiment</label>
+          <input type="text" id="addBuildingName" required minlength="2" maxlength="100" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+        </div>
+        <div>
+          <label for="addBuildingAddress" class="block text-sm font-medium text-dark-300 mb-2">Adresse</label>
+          <input type="text" id="addBuildingAddress" maxlength="255" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white" placeholder="Ex: 12 rue de la Sante, 75013 Paris">
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('addBuilding')" class="px-6 py-2.5 bg-dark-700 text-white rounded-xl">Annuler</button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT BUILDING -->
+  <div id="modal-editBuilding" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-editBuilding-title" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onclick="closeModal('editBuilding')" aria-hidden="true"></div>
+    <div class="relative w-full max-w-xl bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl">
+      <div class="flex items-center justify-between p-6 border-b border-dark-700">
+        <h3 id="modal-editBuilding-title" class="text-xl font-semibold text-white">Modifier le batiment</h3>
+        <button onclick="closeModal('editBuilding')" class="p-2 hover:bg-dark-700 rounded-lg" aria-label="Fermer">
+          <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="editBuildingFormEl" class="p-6 space-y-5">
+        <input type="hidden" id="editBuildingId">
+        <div>
+          <label for="editBuildingName" class="block text-sm font-medium text-dark-300 mb-2">Nom du batiment</label>
+          <input type="text" id="editBuildingName" required minlength="2" maxlength="100" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+        </div>
+        <div>
+          <label for="editBuildingAddress" class="block text-sm font-medium text-dark-300 mb-2">Adresse</label>
+          <input type="text" id="editBuildingAddress" maxlength="255" class="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-white">
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+          <button type="button" onclick="closeModal('editBuilding')" class="px-6 py-2.5 bg-dark-700 text-white rounded-xl">Annuler</button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-3" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+  <!-- JavaScript -->
+  <script src="js/app.js?v=2.1"></script>
+</body>
+</html>

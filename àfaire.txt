@@ -1,0 +1,14 @@
+reste à faire : 
+
+Correction du mea sur looping et corriger à l'aide de la correction du prof (OK)
+
+
+
+
+- Ajouter les bâtiments et donc créer la table sql pour, 
+
+- Faire en sorte que sur chaque salle, il est possible de choisir en extra : Petit dejeuner et dejeuner 
+
+- Faire en sorte aussi que chaque salle est des "features" des options à eux ex : la salle saturne à un video projecteur etc. faut faire en sorte que chaque salle ai des options et pas toutes les salles les meme
+
+- Faire une option dans la recherche des salles (faire en sorte de pouvoir choisir une recherche par matériel / options)
