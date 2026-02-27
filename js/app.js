@@ -357,8 +357,6 @@ async function loadUsers() {
     }
 }
 
-}
-
 async function loadBuildings() {
     try {
         buildings = await api('buildings.php');
