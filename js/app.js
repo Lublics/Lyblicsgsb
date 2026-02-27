@@ -14,7 +14,6 @@ let currentUser = null;
 let rooms = [];
 let bookings = [];
 let users = [];
-let options = [];
 let buildings = [];
 let currentWeekOffset = 0;
 let currentFilter = 'all';
@@ -308,7 +307,6 @@ async function initApp() {
     await Promise.all([
         loadRooms(),
         loadBookings(),
-        loadOptions(),
         loadBuildings()
     ]);
 
@@ -359,19 +357,6 @@ async function loadUsers() {
     }
 }
 
-async function loadOptions() {
-    try {
-        options = await api('options.php');
-    } catch (error) {
-        console.error('Error loading options:', error);
-        options = [
-            { id: 1, name: 'Visioconference' },
-            { id: 2, name: 'Videoprojecteur' },
-            { id: 3, name: 'Petit dejeuner' },
-            { id: 4, name: 'Machine a cafe' },
-            { id: 5, name: 'WiFi' }
-        ];
-    }
 }
 
 async function loadBuildings() {
@@ -848,26 +833,6 @@ function populateBookingModal() {
     document.getElementById('bookingDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('bookingDate').min = new Date().toISOString().split('T')[0];
 
-    const mealKeywords = ['petit dejeuner', 'dejeuner'];
-    const mealOptions = options.filter(o => mealKeywords.includes(o.name.toLowerCase()));
-    const serviceOptions = options.filter(o => !mealKeywords.includes(o.name.toLowerCase()));
-
-    document.getElementById('bookingMealOptions').innerHTML = mealOptions.length
-        ? mealOptions.map(o => `
-            <label class="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl cursor-pointer hover:border-amber-500/40 transition-colors">
-                <input type="checkbox" name="opts" value="${escapeHtml(o.name)}" class="w-4 h-4 rounded bg-dark-700 border-dark-600 text-amber-500 focus:ring-amber-500">
-                <span class="text-sm text-dark-200">${escapeHtml(o.name)}</span>
-            </label>
-        `).join('')
-        : '<p class="text-sm text-dark-400 col-span-2">Aucune option repas disponible</p>';
-
-    document.getElementById('bookingOptions').innerHTML = serviceOptions
-        .map(o => `
-            <label class="flex items-center gap-3 p-3 bg-dark-800 border border-dark-700 rounded-xl cursor-pointer hover:border-primary-500/50 transition-colors">
-                <input type="checkbox" name="opts" value="${escapeHtml(o.name)}" class="w-4 h-4 rounded bg-dark-700 border-dark-600 text-primary-500 focus:ring-primary-500">
-                <span class="text-sm text-dark-200">${escapeHtml(o.name)}</span>
-            </label>
-        `).join('');
 }
 
 // ========================================
@@ -1085,17 +1050,13 @@ async function handleBookingSubmit(event) {
     const btn = document.getElementById('bookingSubmitBtn');
     setButtonLoading(btn, true);
 
-    const selectedOptions = Array.from(document.querySelectorAll('input[name="opts"]:checked'))
-        .map(cb => cb.value);
-
     try {
         await api('bookings.php', 'POST', {
             roomId: parseInt(document.getElementById('bookingRoom').value),
             date: document.getElementById('bookingDate').value,
             start: document.getElementById('bookingStart').value,
             end: document.getElementById('bookingEnd').value,
-            subject: document.getElementById('bookingSubject').value,
-            options: selectedOptions
+            subject: document.getElementById('bookingSubject').value
         });
 
         showToast('Reservation creee avec succes', 'success');
