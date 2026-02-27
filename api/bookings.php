@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $db = Database::getInstance()->getConnection();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = getRequestMethod();
 
 switch ($method) {
     case 'GET':
@@ -185,7 +185,7 @@ function createBooking($db) {
     $session = checkAuth();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     // Validation des champs requis
     if (empty($data['roomId']) || empty($data['date']) || empty($data['start']) || empty($data['end']) || empty($data['subject'])) {
@@ -333,7 +333,7 @@ function updateBooking($db) {
     $session = checkAuth();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID de reservation requis'], 400);
@@ -411,7 +411,7 @@ function deleteBooking($db) {
     $session = checkAuth();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID de reservation requis'], 400);

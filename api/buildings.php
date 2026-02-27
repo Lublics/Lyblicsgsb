@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $db = Database::getInstance()->getConnection();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = getRequestMethod();
 
 switch ($method) {
     case 'GET':
@@ -106,7 +106,7 @@ function createBuilding($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['name'])) {
         jsonResponse(['error' => 'Nom du batiment requis'], 400);
@@ -146,7 +146,7 @@ function updateBuilding($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID du batiment requis'], 400);
@@ -205,7 +205,7 @@ function deleteBuilding($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID du batiment requis'], 400);

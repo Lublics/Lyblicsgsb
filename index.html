@@ -634,10 +634,28 @@
     </div>
   </div>
 
+  <!-- MODAL CONFIRMATION -->
+  <div id="modal-confirm" class="fixed inset-0 z-[60] hidden items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" aria-hidden="true">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" aria-hidden="true"></div>
+    <div class="relative w-full max-w-md bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl transform transition-all">
+      <div class="p-6 text-center">
+        <div id="confirm-icon" class="mx-auto mb-4 w-14 h-14 rounded-full bg-rose-500/10 flex items-center justify-center">
+          <svg class="w-7 h-7 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <h3 id="confirm-title" class="text-lg font-semibold text-white mb-2">Confirmer la suppression</h3>
+        <p id="confirm-message" class="text-sm text-dark-400 mb-6">Cette action est irreversible.</p>
+        <div class="flex gap-3 justify-center">
+          <button id="confirm-cancel-btn" class="px-5 py-2.5 bg-dark-700 hover:bg-dark-600 text-white rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-dark-500">Annuler</button>
+          <button id="confirm-action-btn" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast container -->
   <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-3" role="region" aria-label="Notifications" aria-live="polite"></div>
 
   <!-- JavaScript -->
-  <script src="js/app.js?v=2.1"></script>
+  <script src="js/app.js?v=2.2"></script>
 </body>
 </html>

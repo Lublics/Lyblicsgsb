@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $db = Database::getInstance()->getConnection();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = getRequestMethod();
 
 switch ($method) {
     case 'GET':
@@ -160,7 +160,7 @@ function createRoom($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     // Validation
     if (empty($data['name']) || empty($data['capacity'])) {
@@ -233,7 +233,7 @@ function updateRoom($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID de salle requis'], 400);
@@ -329,7 +329,7 @@ function deleteRoom($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID de salle requis'], 400);

@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $db = Database::getInstance()->getConnection();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = getRequestMethod();
 
 switch ($method) {
     case 'GET':
@@ -85,7 +85,7 @@ function createOption($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['name'])) {
         jsonResponse(['error' => 'Nom de l\'option requis'], 400);
@@ -132,7 +132,7 @@ function updateOption($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID de l\'option requis'], 400);
@@ -186,7 +186,7 @@ function deleteOption($db) {
     $session = checkAdmin();
     verifyCsrf();
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['id'])) {
         jsonResponse(['error' => 'ID de l\'option requis'], 400);

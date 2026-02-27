@@ -66,7 +66,7 @@ function login($db) {
         ], 429);
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     // Validation des champs
     if (empty($data['email']) || empty($data['password'])) {
@@ -137,7 +137,7 @@ function register($db) {
         ], 429);
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     // Validation des champs requis
     if (empty($data['nom']) || empty($data['prenom']) || empty($data['email']) || empty($data['password'])) {
@@ -301,7 +301,7 @@ function forgotPassword($db) {
         ], 429);
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data = getRequestBody();
 
     if (empty($data['email'])) {
         jsonResponse(['error' => 'Email requis'], 400);

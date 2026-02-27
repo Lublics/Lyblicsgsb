@@ -477,6 +477,39 @@ function verifyCsrf() {
 }
 
 /**
+ * Detecte la methode HTTP reelle (support _method pour PUT/DELETE via POST)
+ */
+function getRequestMethod() {
+    global $_REQUEST_BODY;
+    $method = $_SERVER['REQUEST_METHOD'];
+    if ($method === 'POST') {
+        $raw = file_get_contents('php://input');
+        $_REQUEST_BODY = $raw;
+        $data = json_decode($raw, true);
+        if (isset($data['_method']) && in_array($data['_method'], ['PUT', 'DELETE'])) {
+            $method = $data['_method'];
+        }
+    }
+    return $method;
+}
+
+/**
+ * Recupere le body JSON de la requete (supporte la relecture apres getRequestMethod)
+ */
+function getRequestBody() {
+    global $_REQUEST_BODY;
+    if (isset($_REQUEST_BODY)) {
+        $data = json_decode($_REQUEST_BODY, true);
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+    }
+    if (isset($data['_method'])) {
+        unset($data['_method']);
+    }
+    return $data;
+}
+
+/**
  * Sanitize une chaine de caracteres
  */
 function sanitizeString($input) {

@@ -24,8 +24,16 @@ let csrfToken = null;
 // ========================================
 
 async function api(endpoint, method = 'GET', data = null) {
+    // Envoyer PUT/DELETE via POST avec _method pour compatibilite hebergeurs
+    let actualMethod = method;
+    if (method === 'PUT' || method === 'DELETE') {
+        actualMethod = 'POST';
+        data = data || {};
+        data._method = method;
+    }
+
     const config = {
-        method,
+        method: actualMethod,
         headers: {
             'Content-Type': 'application/json'
         },
@@ -771,6 +779,46 @@ function renderAdminBuildings() {
 }
 
 // ========================================
+// Confirmation modale
+// ========================================
+
+function confirmAction(title, message, actionLabel = 'Supprimer') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-confirm');
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-message').textContent = message;
+        document.getElementById('confirm-action-btn').textContent = actionLabel;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+
+        const actionBtn = document.getElementById('confirm-action-btn');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+        function cleanup() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.setAttribute('aria-hidden', 'true');
+            actionBtn.removeEventListener('click', onConfirm);
+            cancelBtn.removeEventListener('click', onCancel);
+            modal.removeEventListener('keydown', onKey);
+        }
+
+        function onConfirm() { cleanup(); resolve(true); }
+        function onCancel() { cleanup(); resolve(false); }
+        function onKey(e) {
+            if (e.key === 'Escape') onCancel();
+        }
+
+        actionBtn.addEventListener('click', onConfirm);
+        cancelBtn.addEventListener('click', onCancel);
+        modal.addEventListener('keydown', onKey);
+        cancelBtn.focus();
+    });
+}
+
+// ========================================
 // Modales
 // ========================================
 
@@ -952,9 +1000,12 @@ async function handleAddUserSubmit(event) {
 }
 
 async function deleteUser(userId) {
-    if (!confirm('Etes-vous sur de vouloir supprimer cet utilisateur ?')) {
-        return;
-    }
+    const user = users.find(u => u.id === userId);
+    const confirmed = await confirmAction(
+        'Supprimer cet utilisateur ?',
+        `${user ? user.name + ' ' + user.firstname : 'Cet utilisateur'} sera definitivement supprime.`
+    );
+    if (!confirmed) return;
 
     try {
         await api('users.php', 'DELETE', { id: userId });
@@ -1024,9 +1075,12 @@ async function handleEditBuildingSubmit(event) {
 }
 
 async function deleteBuilding(buildingId) {
-    if (!confirm('Etes-vous sur de vouloir supprimer ce batiment ?')) {
-        return;
-    }
+    const building = buildings.find(b => b.id === buildingId);
+    const confirmed = await confirmAction(
+        'Supprimer ce batiment ?',
+        `"${building ? building.name : 'Ce batiment'}" sera definitivement supprime.`
+    );
+    if (!confirmed) return;
 
     try {
         await api('buildings.php', 'DELETE', { id: buildingId });
@@ -1095,9 +1149,12 @@ async function handleAddRoomSubmit(event) {
 }
 
 async function cancelBooking(bookingId) {
-    if (!confirm('Etes-vous sur de vouloir annuler cette reservation ?')) {
-        return;
-    }
+    const confirmed = await confirmAction(
+        'Annuler cette reservation ?',
+        'La reservation sera annulee. Cette action est irreversible.',
+        'Annuler la reservation'
+    );
+    if (!confirmed) return;
 
     try {
         await api('bookings.php', 'DELETE', { id: bookingId });
@@ -1126,9 +1183,12 @@ async function toggleRoomStatus(roomId, currentStatus) {
 }
 
 async function deleteRoom(roomId) {
-    if (!confirm('Etes-vous sur de vouloir supprimer cette salle ?')) {
-        return;
-    }
+    const room = rooms.find(r => r.id === roomId);
+    const confirmed = await confirmAction(
+        'Supprimer cette salle ?',
+        `"${room ? room.name : 'Cette salle'}" sera definitivement supprimee.`
+    );
+    if (!confirmed) return;
 
     try {
         await api('rooms.php', 'DELETE', { id: roomId });
