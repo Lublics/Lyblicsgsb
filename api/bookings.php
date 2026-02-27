@@ -115,20 +115,24 @@ function getBookings($db) {
     // Batch : recuperer la derniere action pour toutes les reservations en une seule requete
     $lastActions = [];
     if (!empty($bookings)) {
-        $bookingIds = array_column($bookings, 'id_reservation');
-        $placeholders = implode(',', array_fill(0, count($bookingIds), '?'));
-        $logSql = "SELECT a.target_id, a.action_type, a.actor_name, a.actor_role
-                   FROM ActivityLog a
-                   INNER JOIN (
-                       SELECT target_id, MAX(created_at) as max_date
-                       FROM ActivityLog
-                       WHERE target_type = 'reservation' AND target_id IN ($placeholders)
-                       GROUP BY target_id
-                   ) latest ON a.target_id = latest.target_id AND a.created_at = latest.max_date AND a.target_type = 'reservation'";
-        $logStmt = $db->prepare($logSql);
-        $logStmt->execute($bookingIds);
-        foreach ($logStmt->fetchAll() as $log) {
-            $lastActions[$log['target_id']] = $log;
+        try {
+            $bookingIds = array_column($bookings, 'id_reservation');
+            $placeholders = implode(',', array_fill(0, count($bookingIds), '?'));
+            $logSql = "SELECT a.target_id, a.action_type, a.actor_name, a.actor_role
+                       FROM ActivityLog a
+                       INNER JOIN (
+                           SELECT target_id, MAX(created_at) as max_date
+                           FROM ActivityLog
+                           WHERE target_type = 'reservation' AND target_id IN ($placeholders)
+                           GROUP BY target_id
+                       ) latest ON a.target_id = latest.target_id AND a.created_at = latest.max_date AND a.target_type = 'reservation'";
+            $logStmt = $db->prepare($logSql);
+            $logStmt->execute($bookingIds);
+            foreach ($logStmt->fetchAll() as $log) {
+                $lastActions[$log['target_id']] = $log;
+            }
+        } catch (PDOException $e) {
+            // Table ActivityLog pas encore creee - on continue sans
         }
     }
 
