@@ -52,7 +52,7 @@ try {
     // Supprimer les tables existantes (dans l'ordre des dependances)
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
     $tables = ['Reservation_Option', 'Notification',
-               'Reservation', 'Salle_Equipement', 'Equipement', 'Salle', 'Batiment', 'Option_Service', 'Utilisateur'];
+               'Reservation', 'Salle_Equipement', 'Equipement', 'Option_Service', 'Salle', 'Batiment', 'Utilisateur'];
     foreach ($tables as $table) {
         $pdo->exec("DROP TABLE IF EXISTS `$table`");
     }

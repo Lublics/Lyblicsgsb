@@ -667,7 +667,7 @@ function renderMyBookings() {
     document.getElementById('myBookingsTable').innerHTML = rows;
 }
 
-function filterMyBookings(filter) {
+function filterMyBookings(filter, evt) {
     currentFilter = filter;
 
     document.querySelectorAll('.booking-filter').forEach(btn => {
@@ -675,8 +675,10 @@ function filterMyBookings(filter) {
         btn.setAttribute('aria-pressed', 'false');
     });
 
-    event.target.classList.add('active');
-    event.target.setAttribute('aria-pressed', 'true');
+    if (evt && evt.target) {
+        evt.target.classList.add('active');
+        evt.target.setAttribute('aria-pressed', 'true');
+    }
 
     renderMyBookings();
 }
@@ -882,6 +884,31 @@ function populateBookingModal() {
     document.getElementById('bookingDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('bookingDate').min = new Date().toISOString().split('T')[0];
 
+    // Creneaux horaires de 07:00 a 20:00 par tranches de 30 min
+    const startSelect = document.getElementById('bookingStart');
+    const endSelect = document.getElementById('bookingEnd');
+    const slots = [];
+    for (let h = 7; h <= 20; h++) {
+        for (let m = 0; m < 60; m += 30) {
+            if (h === 20 && m > 0) break;
+            const t = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            slots.push(t);
+        }
+    }
+
+    startSelect.innerHTML = slots.map(t => `<option value="${t}">${t}</option>`).join('');
+    endSelect.innerHTML = slots.map(t => `<option value="${t}">${t}</option>`).join('');
+
+    // Pre-selectionner 09:00 - 10:00
+    startSelect.value = '09:00';
+    endSelect.value = '10:00';
+
+    // Quand on change l'heure de debut, avancer la fin de +1h
+    startSelect.onchange = function() {
+        const idx = slots.indexOf(this.value);
+        const endIdx = Math.min(idx + 2, slots.length - 1);
+        endSelect.value = slots[endIdx];
+    };
 }
 
 // ========================================
@@ -1006,7 +1033,7 @@ async function deleteUser(userId) {
     const user = users.find(u => u.id === userId);
     const confirmed = await confirmAction(
         'Supprimer cet utilisateur ?',
-        `${user ? user.name + ' ' + user.firstname : 'Cet utilisateur'} sera definitivement supprime.`
+        `${user ? user.nom + ' ' + user.prenom : 'Cet utilisateur'} sera definitivement supprime.`
     );
     if (!confirmed) return;
 
