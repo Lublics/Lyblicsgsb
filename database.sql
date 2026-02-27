@@ -175,11 +175,11 @@ INSERT INTO `Batiment` (`nom_batiment`, `adresse_batiment`) VALUES
 -- Utilisateurs (mot de passe: Admin123!@#)
 -- Le hash est genere avec password_hash() PHP, cost=12
 INSERT INTO `Utilisateur` (`nom_user`, `prenom_user`, `email_user`, `mot_de_passe`, `rôle_user`) VALUES
-('Dupont', 'Jean', 'admin@gsb.local', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4iT6GWKN6.qVHPHy', 'Admin'),
-('Martin', 'Sophie', 'sophie.martin@gsb.local', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4iT6GWKN6.qVHPHy', 'Delegue'),
-('Durand', 'Thomas', 'thomas.durand@gsb.local', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4iT6GWKN6.qVHPHy', 'Employe'),
-('Lambert', 'Marie', 'marie.lambert@gsb.local', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4iT6GWKN6.qVHPHy', 'Employe'),
-('Bernard', 'Pierre', 'pierre.bernard@gsb.local', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4iT6GWKN6.qVHPHy', 'Delegue');
+('Dupont', 'Jean', 'admin@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Admin'),
+('Martin', 'Sophie', 'sophie.martin@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Delegue'),
+('Durand', 'Thomas', 'thomas.durand@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Employe'),
+('Lambert', 'Marie', 'marie.lambert@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Employe'),
+('Bernard', 'Pierre', 'pierre.bernard@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Delegue');
 
 -- Salles
 INSERT INTO `Salle` (`nom_salle`, `description_salle`, `capacite_salle`, `etat_salle`, `id_batiment`) VALUES

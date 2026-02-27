@@ -5,4 +5,4 @@ nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_mysql", "php82Pa
 cmds = ["composer install --ignore-platform-reqs || true"]
 
 [start]
-cmd = "php -S 0.0.0.0:${PORT:-3000} -t /app /app/router.php"
+cmd = "bash /app/start.sh"
