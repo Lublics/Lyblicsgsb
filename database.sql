@@ -172,8 +172,8 @@ INSERT INTO `Batiment` (`nom_batiment`, `adresse_batiment`) VALUES
 ('Batiment B - Annexe', '45 avenue des Sciences, 75013 Paris'),
 ('Batiment C - Centre de formation', '8 boulevard Pasteur, 75015 Paris');
 
--- Utilisateurs (mot de passe: Admin123!@#)
--- Le hash est genere avec password_hash() PHP, cost=12
+-- Utilisateurs (le mot de passe est defini via DEMO_PASSWORD dans .env lors de l'init)
+-- Le hash ci-dessous est un exemple — utiliser init.php pour generer les vrais comptes
 INSERT INTO `Utilisateur` (`nom_user`, `prenom_user`, `email_user`, `mot_de_passe`, `rôle_user`) VALUES
 ('Dupont', 'Jean', 'admin@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Admin'),
 ('Martin', 'Sophie', 'sophie.martin@gsb.local', '$2y$12$7vEaYHb0kDhW7OHSXu6N/et7iDorL7IxbhfZeOjAPJLWZVLvDgSLu', 'Delegue'),

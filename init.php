@@ -10,10 +10,10 @@
 
 // Verification de securite
 $isCliMode = (php_sapi_name() === 'cli');
-$initToken = getenv('INIT_TOKEN') ?: 'gsb_init_secret_2024';
+$initToken = getenv('INIT_TOKEN') ?: null;
 $providedToken = $_GET['token'] ?? '';
 
-if (!$isCliMode && $providedToken !== $initToken) {
+if (!$isCliMode && (!$initToken || $providedToken !== $initToken)) {
     http_response_code(403);
     echo "<div style='background: #ef4444; color: white; padding: 20px; border-radius: 8px; margin: 20px; font-family: sans-serif;'>";
     echo "<h3 style='margin: 0 0 10px 0;'>Acces refuse</h3>";
@@ -246,8 +246,9 @@ try {
     }
     output(count($batiments) . " batiments crees", "success");
 
-    // Utilisateurs (mot de passe securise: Admin123!@#)
-    $securePassword = password_hash('Admin123!@#', PASSWORD_DEFAULT, ['cost' => 12]);
+    // Utilisateurs de demonstration (mot de passe defini via DEMO_PASSWORD dans .env)
+    $demoPassword = getenv('DEMO_PASSWORD') ?: 'ChangeMe123!';
+    $securePassword = password_hash($demoPassword, PASSWORD_DEFAULT, ['cost' => 12]);
 
     $stmt = $pdo->prepare("INSERT INTO Utilisateur (nom_user, prenom_user, email_user, mot_de_passe, rôle_user) VALUES (?, ?, ?, ?, ?)");
 
@@ -381,7 +382,7 @@ try {
         output("<div style='background: #3b82f6; color: white; padding: 20px; border-radius: 8px; margin-top: 20px;'>");
         output("<h3 style='margin: 0 0 10px 0;'>Comptes de demonstration</h3>");
         output("<p style='margin: 0;'><strong>Admin:</strong> admin@gsb.local</p>");
-        output("<p style='margin: 0;'><strong>Mot de passe:</strong> Admin123!@#</p>");
+        output("<p style='margin: 0;'><strong>Mot de passe:</strong> " . htmlspecialchars($demoPassword) . "</p>");
         output("<p style='margin: 10px 0 0 0; font-size: 0.9em;'>Ce message n'apparait qu'en mode developpement.</p>");
         output("</div>");
     }

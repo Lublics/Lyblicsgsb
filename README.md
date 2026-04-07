@@ -72,9 +72,9 @@ php init.php
 
 **Option B - Via navigateur** :
 
-Acceder a `http://localhost/gsb-reservation/init.php?token=gsb_init_secret_2024`
+Acceder a `http://localhost/gsb-reservation/init.php?token=VOTRE_INIT_TOKEN`
 
-> Note: Configurez `INIT_TOKEN` dans votre `.env` pour securiser l'acces.
+> Note: Definissez `INIT_TOKEN` dans votre `.env` avant d'utiliser cette option.
 
 ### 4. Lancer l'application
 
@@ -84,9 +84,9 @@ Acceder a `http://localhost/gsb-reservation/`
 
 | Role | Email | Mot de passe |
 |------|-------|--------------|
-| Admin | admin@gsb.local | Admin123!@# |
-| Delegue | sophie.martin@gsb.local | Admin123!@# |
-| Employe | thomas.durand@gsb.local | Admin123!@# |
+| Admin | admin@gsb.local | *(defini lors de l'init)* |
+| Delegue | sophie.martin@gsb.local | *(defini lors de l'init)* |
+| Employe | thomas.durand@gsb.local | *(defini lors de l'init)* |
 
 ## Structure du projet
 

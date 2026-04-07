@@ -1,0 +1,25 @@
+# Environnement
+.env
+.env.local
+
+# Dépendances PHP
+vendor/
+
+# Logs
+logs/
+*.log
+
+# Scripts utilitaires sensibles (ne jamais commiter)
+fix_passwords.php
+create_admin.php
+
+# Fichiers de travail
+*.docx
+àfaire.txt
+ARCHITECTURE.md
+CHANGES.md
+CLAUDE.md
+
+# OS
+.DS_Store
+Thumbs.db
