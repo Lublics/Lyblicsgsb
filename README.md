@@ -1,4 +1,4 @@
-# GSB Reservation
+# GSB Reservation - https://gsb.lyblics.com/
 
 Systeme de gestion de reservations de salles de reunion pour GSB (Galaxy Swiss Bourdin).
 
